@@ -1,5 +1,8 @@
 import type {
+  Attachment,
   Task,
+  TaskActivity,
+  TaskEvent,
   TaskInput,
   TaskListResponse,
   TaskQuery,
@@ -130,6 +133,7 @@ export async function listTasks(query: TaskQuery): Promise<TaskListResponse> {
   if (query.order) params.set("order", query.order);
   if (query.page) params.set("page", String(query.page));
   if (query.limit) params.set("limit", String(query.limit));
+  if (query.scope) params.set("scope", query.scope);
   const qs = params.toString();
   return request<TaskListResponse>(`/tasks${qs ? `?${qs}` : ""}`);
 }
@@ -157,4 +161,73 @@ export async function updateTask(id: number, input: TaskInput): Promise<Task> {
 
 export async function deleteTask(id: number): Promise<void> {
   await request<void>(`/tasks/${id}`, { method: "DELETE" });
+}
+
+// --- Activity ---
+
+export async function listActivity(taskId: number): Promise<TaskActivity[]> {
+  const res = await request<{ data: TaskActivity[] }>(`/tasks/${taskId}/activity`);
+  return res.data;
+}
+
+// --- Attachments ---
+
+export async function listAttachments(taskId: number): Promise<Attachment[]> {
+  const res = await request<{ data: Attachment[] }>(`/tasks/${taskId}/attachments`);
+  return res.data;
+}
+
+export async function uploadAttachment(taskId: number, file: File): Promise<Attachment> {
+  const form = new FormData();
+  form.append("file", file);
+
+  const headers: Record<string, string> = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}/tasks/${taskId}/attachments`, {
+      method: "POST",
+      headers,
+      body: form,
+      credentials: "include",
+    });
+  } catch {
+    throw new ApiError(0, "NETWORK_ERROR", "Could not reach the server. Is the API running?");
+  }
+
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    const err = (body as { error?: { code?: string; message?: string } })?.error;
+    throw new ApiError(res.status, err?.code ?? "UNKNOWN", err?.message ?? "Upload failed");
+  }
+  return (body as { data: Attachment }).data;
+}
+
+export async function deleteAttachment(taskId: number, attachmentId: number): Promise<void> {
+  await request<void>(`/tasks/${taskId}/attachments/${attachmentId}`, { method: "DELETE" });
+}
+
+export function attachmentDownloadUrl(taskId: number, attachmentId: number): string {
+  return `${API_URL}/tasks/${taskId}/attachments/${attachmentId}/download`;
+}
+
+// --- Real-time events (SSE) ---
+
+/**
+ * Subscribes to live task events. Authentication relies on the httpOnly
+ * cookie set at login (EventSource cannot send an Authorization header).
+ * Returns a cleanup function.
+ */
+export function subscribeToEvents(onEvent: (event: TaskEvent) => void): () => void {
+  const source = new EventSource(`${API_URL}/events`, { withCredentials: true });
+  source.onmessage = (e) => {
+    try {
+      onEvent(JSON.parse(e.data) as TaskEvent);
+    } catch {
+      // Ignore malformed events.
+    }
+  };
+  return () => source.close();
 }

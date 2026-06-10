@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { ThemeToggle } from "./theme-toggle";
 import { FieldError, FullPageSpinner, Spinner } from "./ui";
 
 interface Field {
@@ -95,11 +96,16 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-12">
+    <main className="relative flex flex-1 items-center justify-center px-4 py-12">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800">Taskflow</h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
+            Taskflow
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             {mode === "signup" ? "Create your account" : "Welcome back"}
           </p>
         </div>
@@ -107,13 +113,13 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
         <form
           onSubmit={handleSubmit}
           noValidate
-          className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
         >
           {fields.map((field) => (
             <div key={field.name}>
               <label
                 htmlFor={field.name}
-                className="mb-1 block text-sm font-medium text-slate-700"
+                className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
               >
                 {field.label}
               </label>
@@ -126,14 +132,14 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
                 onChange={(e) =>
                   setValues((v) => ({ ...v, [field.name]: e.target.value }))
                 }
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-900"
               />
               <FieldError message={errors[field.name]} />
             </div>
           ))}
 
           {formError && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
               {formError}
             </p>
           )}
@@ -148,18 +154,24 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
           {mode === "signup" ? (
             <>
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-indigo-600 hover:underline">
+              <Link
+                href="/login"
+                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              >
                 Log in
               </Link>
             </>
           ) : (
             <>
               New here?{" "}
-              <Link href="/signup" className="font-medium text-indigo-600 hover:underline">
+              <Link
+                href="/signup"
+                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              >
                 Create an account
               </Link>
             </>

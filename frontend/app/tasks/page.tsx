@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import * as api from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type {
@@ -15,6 +21,7 @@ import type {
 import { Pagination } from "@/components/pagination";
 import { TaskFormModal } from "@/components/task-form-modal";
 import { TaskItem } from "@/components/task-item";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   EmptyState,
   ErrorBanner,
@@ -30,6 +37,8 @@ interface Filters {
   sortBy: SortBy;
   order: SortOrder;
   page: number;
+  /** Admin only: show every user's tasks. */
+  scopeAll: boolean;
 }
 
 function filtersFromParams(params: URLSearchParams): Filters {
@@ -43,6 +52,7 @@ function filtersFromParams(params: URLSearchParams): Filters {
     sortBy: sortBy === "due_date" || sortBy === "priority" ? sortBy : "created_at",
     order: order === "asc" ? "asc" : "desc",
     page: Number.isInteger(page) && page > 0 ? page : 1,
+    scopeAll: params.get("scope") === "all",
   };
 }
 
@@ -53,6 +63,7 @@ function paramsFromFilters(filters: Filters): string {
   if (filters.sortBy !== "created_at") params.set("sort_by", filters.sortBy);
   if (filters.order !== "desc") params.set("order", filters.order);
   if (filters.page > 1) params.set("page", String(filters.page));
+  if (filters.scopeAll) params.set("scope", "all");
   return params.toString();
 }
 
@@ -70,6 +81,7 @@ function TasksPageInner() {
   const [meta, setMeta] = useState<ListMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
   const [busyTaskId, setBusyTaskId] = useState<number | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -98,71 +110,109 @@ function TasksPageInner() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  const loadTasks = useCallback(async () => {
-    const seq = ++fetchSeq.current;
-    setLoading(true);
-    setError("");
-    try {
-      const res = await api.listTasks({
-        status: filters.status,
-        search: filters.search,
-        sort_by: filters.sortBy,
-        order: filters.order,
-        page: filters.page,
-        limit: PAGE_SIZE,
-      });
-      if (seq !== fetchSeq.current) return;
-      setTasks(res.data);
-      setMeta(res.meta);
-      // If deleting emptied the current page, step back one page.
-      if (res.data.length === 0 && res.meta.total > 0 && filters.page > 1) {
-        setFilters((f) => ({ ...f, page: Math.max(1, res.meta.total_pages) }));
+  const loadTasks = useCallback(
+    async ({ silent = false }: { silent?: boolean } = {}) => {
+      const seq = ++fetchSeq.current;
+      if (!silent) {
+        setLoading(true);
+        setError("");
       }
-    } catch (err) {
-      if (seq !== fetchSeq.current) return;
-      if (err instanceof api.ApiError && err.status === 401) {
-        router.replace("/login");
-        return;
+      try {
+        const res = await api.listTasks({
+          status: filters.status,
+          search: filters.search,
+          sort_by: filters.sortBy,
+          order: filters.order,
+          page: filters.page,
+          limit: PAGE_SIZE,
+          scope: filters.scopeAll ? "all" : "",
+        });
+        if (seq !== fetchSeq.current) return;
+        setTasks(res.data);
+        setMeta(res.meta);
+        setError("");
+        // If deleting emptied the current page, step back one page.
+        if (res.data.length === 0 && res.meta.total > 0 && filters.page > 1) {
+          setFilters((f) => ({ ...f, page: Math.max(1, res.meta.total_pages) }));
+        }
+      } catch (err) {
+        if (seq !== fetchSeq.current) return;
+        if (err instanceof api.ApiError && err.status === 401) {
+          router.replace("/login");
+          return;
+        }
+        if (!silent) {
+          setError(err instanceof api.ApiError ? err.message : "Failed to load tasks");
+        }
+      } finally {
+        if (seq === fetchSeq.current && !silent) setLoading(false);
       }
-      setError(err instanceof api.ApiError ? err.message : "Failed to load tasks");
-    } finally {
-      if (seq === fetchSeq.current) setLoading(false);
-    }
-  }, [filters, router]);
+    },
+    [filters, router]
+  );
 
   useEffect(() => {
     if (!initializing && user) loadTasks();
   }, [initializing, user, loadTasks]);
 
+  // Live updates: refresh quietly whenever the server reports a task change.
+  const loadTasksRef = useRef(loadTasks);
+  useEffect(() => {
+    loadTasksRef.current = loadTasks;
+  }, [loadTasks]);
+
+  useEffect(() => {
+    if (initializing || !user) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = api.subscribeToEvents(() => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => loadTasksRef.current({ silent: true }), 250);
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [initializing, user]);
+
   if (initializing || !user) return <FullPageSpinner />;
+
+  const isAdmin = user.role === "admin";
 
   const setFilter = (patch: Partial<Filters>) =>
     setFilters((f) => ({ ...f, ...patch, page: patch.page ?? 1 }));
 
+  // Optimistic complete-toggle: flip immediately, roll back if the API fails.
   async function handleToggleComplete(task: Task) {
+    const nextStatus: TaskStatus = task.status === "done" ? "todo" : "done";
+    const previous = tasks;
+    setActionError("");
     setBusyTaskId(task.id);
+    setTasks((list) =>
+      list.map((t) => (t.id === task.id ? { ...t, status: nextStatus } : t))
+    );
     try {
-      await api.updateTask(task.id, {
-        status: task.status === "done" ? "todo" : "done",
-      });
-      await loadTasks();
+      await api.updateTask(task.id, { status: nextStatus });
+      loadTasks({ silent: true });
     } catch {
-      setError("Failed to update task. Please try again.");
+      setTasks(previous);
+      setActionError(`Could not update "${task.title}". Change was rolled back.`);
     } finally {
       setBusyTaskId(null);
     }
   }
 
+  // Optimistic delete: remove immediately, restore on failure.
   async function handleDelete(task: Task) {
     if (!window.confirm(`Delete "${task.title}"? This cannot be undone.`)) return;
-    setBusyTaskId(task.id);
+    const previous = tasks;
+    setActionError("");
+    setTasks((list) => list.filter((t) => t.id !== task.id));
     try {
       await api.deleteTask(task.id);
-      await loadTasks();
+      loadTasks({ silent: true });
     } catch {
-      setError("Failed to delete task. Please try again.");
-    } finally {
-      setBusyTaskId(null);
+      setTasks(previous);
+      setActionError(`Could not delete "${task.title}". Change was rolled back.`);
     }
   }
 
@@ -178,21 +228,45 @@ function TasksPageInner() {
   const hasActiveFilters = Boolean(filters.status || filters.search);
 
   const selectClass =
-    "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500";
+    "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200";
+
+  const newTaskButton = (
+    <button
+      onClick={() => {
+        setEditingTask(null);
+        setModalOpen(true);
+      }}
+      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+    >
+      + New task
+    </button>
+  );
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
-          <h1 className="text-lg font-bold tracking-tight text-slate-800">Taskflow</h1>
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-slate-500 sm:inline">{user.name}</span>
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100">
+              Taskflow
+            </h1>
+            {isAdmin && (
+              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                admin
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <span className="hidden text-sm text-slate-500 sm:inline dark:text-slate-400">
+              {user.name}
+            </span>
             <button
               onClick={async () => {
                 await logout();
                 router.replace("/login");
               }}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Log out
             </button>
@@ -215,18 +289,10 @@ function TasksPageInner() {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search tasks by title…"
               aria-label="Search tasks by title"
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-indigo-900"
             />
           </div>
-          <button
-            onClick={() => {
-              setEditingTask(null);
-              setModalOpen(true);
-            }}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
-          >
-            + New task
-          </button>
+          {newTaskButton}
         </div>
 
         <div className="mb-5 flex flex-wrap items-center gap-2">
@@ -256,10 +322,22 @@ function TasksPageInner() {
           <button
             onClick={() => setFilter({ order: filters.order === "asc" ? "desc" : "asc" })}
             aria-label={`Order ${filters.order === "asc" ? "ascending" : "descending"}`}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             {filters.order === "asc" ? "↑ Asc" : "↓ Desc"}
           </button>
+
+          {isAdmin && (
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+              <input
+                type="checkbox"
+                checked={filters.scopeAll}
+                onChange={(e) => setFilter({ scopeAll: e.target.checked })}
+                className="size-4 accent-indigo-600"
+              />
+              All users
+            </label>
+          )}
 
           {hasActiveFilters && (
             <button
@@ -267,15 +345,21 @@ function TasksPageInner() {
                 setSearchInput("");
                 setFilter({ status: "", search: "" });
               }}
-              className="text-sm font-medium text-indigo-600 hover:underline"
+              className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
             >
               Clear filters
             </button>
           )}
         </div>
 
+        {actionError && (
+          <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
+            {actionError}
+          </p>
+        )}
+
         {error && !loading ? (
-          <ErrorBanner message={error} onRetry={loadTasks} />
+          <ErrorBanner message={error} onRetry={() => loadTasks()} />
         ) : loading && tasks.length === 0 ? (
           <div className="flex justify-center py-20">
             <Spinner className="size-7" />
@@ -288,19 +372,7 @@ function TasksPageInner() {
                 ? "Try changing the search or status filter."
                 : "Create your first task to get started."
             }
-            action={
-              !hasActiveFilters && (
-                <button
-                  onClick={() => {
-                    setEditingTask(null);
-                    setModalOpen(true);
-                  }}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
-                >
-                  + New task
-                </button>
-              )
-            }
+            action={!hasActiveFilters && newTaskButton}
           />
         ) : (
           <>
@@ -310,6 +382,7 @@ function TasksPageInner() {
                   key={task.id}
                   task={task}
                   busy={busyTaskId === task.id}
+                  readOnly={task.user_id !== user.id}
                   onToggleComplete={handleToggleComplete}
                   onEdit={(t) => {
                     setEditingTask(t);
