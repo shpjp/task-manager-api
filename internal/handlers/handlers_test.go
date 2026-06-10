@@ -12,6 +12,7 @@ import (
 	"task-manager-api/internal/auth"
 	"task-manager-api/internal/handlers"
 	"task-manager-api/internal/models"
+	"task-manager-api/internal/realtime"
 	"task-manager-api/internal/repository"
 	"task-manager-api/internal/routes"
 	"task-manager-api/internal/services"
@@ -29,21 +30,33 @@ func newTestServer(t *testing.T) *gin.Engine {
 	if err != nil {
 		t.Fatalf("failed to open in-memory database: %v", err)
 	}
-	if err := db.AutoMigrate(&models.User{}, &models.Task{}); err != nil {
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Task{},
+		&models.TaskActivity{},
+		&models.Attachment{},
+	); err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
 
 	jwtManager := auth.NewJWTManager("test-secret", time.Hour)
-	authService := services.NewAuthService(repository.NewUserRepository(db), jwtManager)
-	taskService := services.NewTaskService(repository.NewTaskRepository(db))
+	hub := realtime.NewHub()
+	taskRepo := repository.NewTaskRepository(db)
+	taskService := services.NewTaskService(taskRepo, repository.NewActivityRepository(db), hub)
+	authService := services.NewAuthService(
+		repository.NewUserRepository(db), jwtManager, []string{"admin@example.com"},
+	)
+	attachmentService := services.NewAttachmentService(
+		repository.NewAttachmentRepository(db), taskRepo, taskService, t.TempDir(), 5<<20,
+	)
 
 	r := gin.New()
-	routes.RegisterRoutes(
-		r,
-		handlers.NewAuthHandler(authService, jwtManager, false),
-		handlers.NewTaskHandler(taskService),
-		jwtManager,
-	)
+	routes.RegisterRoutes(r, routes.Handlers{
+		Auth:        handlers.NewAuthHandler(authService, jwtManager, false),
+		Tasks:       handlers.NewTaskHandler(taskService),
+		Attachments: handlers.NewAttachmentHandler(attachmentService),
+		Events:      handlers.NewEventsHandler(hub),
+	}, jwtManager)
 	return r
 }
 
@@ -181,6 +194,109 @@ func TestUsersCannotAccessOthersTasks(t *testing.T) {
 	// The owner can still access it.
 	if w := doJSON(t, r, http.MethodGet, path, aliceToken, ""); w.Code != http.StatusOK {
 		t.Errorf("owner GET: expected 200, got %d", w.Code)
+	}
+}
+
+func TestAdminCanViewAllTasksButNotModifyThem(t *testing.T) {
+	r := newTestServer(t)
+	userToken := signup(t, r, "regular@example.com")
+	adminToken := signup(t, r, "admin@example.com") // promoted via ADMIN_EMAILS
+
+	w := doJSON(t, r, http.MethodPost, "/tasks", userToken, `{"title":"User's private task"}`)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("failed to create task: %d %s", w.Code, w.Body.String())
+	}
+	var created struct {
+		Data struct {
+			ID uint `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+		t.Fatalf("failed to decode create response: %v", err)
+	}
+	path := fmt.Sprintf("/tasks/%d", created.Data.ID)
+
+	// A regular user may not list everyone's tasks.
+	if w := doJSON(t, r, http.MethodGet, "/tasks?scope=all", userToken, ""); w.Code != http.StatusForbidden {
+		t.Errorf("expected 403 for non-admin scope=all, got %d", w.Code)
+	}
+
+	// The admin sees the other user's task in the global listing with owner info.
+	w = doJSON(t, r, http.MethodGet, "/tasks?scope=all", adminToken, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("admin scope=all failed: %d %s", w.Code, w.Body.String())
+	}
+	var list struct {
+		Data []struct {
+			Title string `json:"title"`
+			Owner *struct {
+				Email string `json:"email"`
+			} `json:"owner"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &list); err != nil {
+		t.Fatalf("failed to decode list: %v", err)
+	}
+	if len(list.Data) != 1 || list.Data[0].Owner == nil || list.Data[0].Owner.Email != "regular@example.com" {
+		t.Errorf("expected the user's task with owner email in admin listing, got %+v", list.Data)
+	}
+
+	// Admin can read a single task but not modify or delete it.
+	if w := doJSON(t, r, http.MethodGet, path, adminToken, ""); w.Code != http.StatusOK {
+		t.Errorf("admin GET: expected 200, got %d", w.Code)
+	}
+	if w := doJSON(t, r, http.MethodPatch, path, adminToken, `{"title":"nope"}`); w.Code != http.StatusNotFound {
+		t.Errorf("admin PATCH: expected 404 (read-only), got %d", w.Code)
+	}
+	if w := doJSON(t, r, http.MethodDelete, path, adminToken, ""); w.Code != http.StatusNotFound {
+		t.Errorf("admin DELETE: expected 404 (read-only), got %d", w.Code)
+	}
+}
+
+func TestActivityLogRecordsChanges(t *testing.T) {
+	r := newTestServer(t)
+	token := signup(t, r, "dana@example.com")
+
+	w := doJSON(t, r, http.MethodPost, "/tasks", token, `{"title":"Track me"}`)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("failed to create task: %d %s", w.Code, w.Body.String())
+	}
+	var created struct {
+		Data struct {
+			ID uint `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+		t.Fatalf("failed to decode create response: %v", err)
+	}
+
+	path := fmt.Sprintf("/tasks/%d", created.Data.ID)
+	if w := doJSON(t, r, http.MethodPatch, path, token, `{"status":"done"}`); w.Code != http.StatusOK {
+		t.Fatalf("failed to update task: %d %s", w.Code, w.Body.String())
+	}
+
+	w = doJSON(t, r, http.MethodGet, path+"/activity", token, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("failed to fetch activity: %d %s", w.Code, w.Body.String())
+	}
+	var activity struct {
+		Data []struct {
+			Action string `json:"action"`
+			Detail string `json:"detail"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &activity); err != nil {
+		t.Fatalf("failed to decode activity: %v", err)
+	}
+	if len(activity.Data) != 2 {
+		t.Fatalf("expected 2 activity entries (created + updated), got %d: %+v", len(activity.Data), activity.Data)
+	}
+	// Newest first.
+	if activity.Data[0].Action != "updated" || !strings.Contains(activity.Data[0].Detail, "todo → done") {
+		t.Errorf("expected status-change entry first, got %+v", activity.Data[0])
+	}
+	if activity.Data[1].Action != "created" {
+		t.Errorf("expected created entry, got %+v", activity.Data[1])
 	}
 }
 

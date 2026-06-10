@@ -8,24 +8,24 @@ import (
 func TestJWTGenerateAndVerify(t *testing.T) {
 	m := NewJWTManager("test-secret", time.Hour)
 
-	token, err := m.Generate(42)
+	token, err := m.Generate(42, "admin")
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)
 	}
 
-	userID, err := m.Verify(token)
+	identity, err := m.Verify(token)
 	if err != nil {
 		t.Fatalf("Verify returned error: %v", err)
 	}
-	if userID != 42 {
-		t.Fatalf("expected userID 42, got %d", userID)
+	if identity.UserID != 42 || identity.Role != "admin" {
+		t.Fatalf("expected userID 42 with admin role, got %+v", identity)
 	}
 }
 
 func TestJWTRejectsExpiredToken(t *testing.T) {
 	m := NewJWTManager("test-secret", -time.Minute)
 
-	token, err := m.Generate(1)
+	token, err := m.Generate(1, "user")
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)
 	}
@@ -36,7 +36,7 @@ func TestJWTRejectsExpiredToken(t *testing.T) {
 }
 
 func TestJWTRejectsWrongSecret(t *testing.T) {
-	token, err := NewJWTManager("secret-a", time.Hour).Generate(1)
+	token, err := NewJWTManager("secret-a", time.Hour).Generate(1, "user")
 	if err != nil {
 		t.Fatalf("Generate returned error: %v", err)
 	}
