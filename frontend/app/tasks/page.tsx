@@ -152,7 +152,10 @@ function TasksPageInner() {
   );
 
   useEffect(() => {
-    if (!initializing && user) loadTasks();
+    if (initializing || !user) return;
+    // Deferred so the fetch's setState never runs synchronously in the effect.
+    const handle = setTimeout(() => loadTasks(), 0);
+    return () => clearTimeout(handle);
   }, [initializing, user, loadTasks]);
 
   // Live updates: refresh quietly whenever the server reports a task change.
