@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -15,6 +16,9 @@ type Config struct {
 	TokenTTL       time.Duration
 	FrontendOrigin string
 	CookieSecure   bool
+	AdminEmails    []string
+	UploadDir      string
+	MaxUploadMB    int64
 }
 
 func Load() (*Config, error) {
@@ -34,12 +38,29 @@ func Load() (*Config, error) {
 		ttlHours = parsed
 	}
 
+	maxUploadMB := int64(5)
+	if raw := os.Getenv("MAX_UPLOAD_MB"); raw != "" {
+		parsed, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil || parsed < 1 {
+			return nil, fmt.Errorf("MAX_UPLOAD_MB must be a positive integer")
+		}
+		maxUploadMB = parsed
+	}
+
+	var adminEmails []string
+	if raw := os.Getenv("ADMIN_EMAILS"); raw != "" {
+		adminEmails = strings.Split(raw, ",")
+	}
+
 	return &Config{
 		AppPort:        getEnv("APP_PORT", "8080"),
 		JWTSecret:      secret,
 		TokenTTL:       time.Duration(ttlHours) * time.Hour,
 		FrontendOrigin: getEnv("FRONTEND_ORIGIN", "http://localhost:3000"),
 		CookieSecure:   os.Getenv("COOKIE_SECURE") == "true",
+		AdminEmails:    adminEmails,
+		UploadDir:      getEnv("UPLOAD_DIR", "./uploads"),
+		MaxUploadMB:    maxUploadMB,
 	}, nil
 }
 

@@ -5,11 +5,15 @@ import (
 	"strings"
 
 	"task-manager-api/internal/auth"
+	"task-manager-api/internal/models"
 
 	"github.com/gin-gonic/gin"
 )
 
-const UserIDKey = "userID"
+const (
+	UserIDKey = "userID"
+	RoleKey   = "userRole"
+)
 
 // RequireAuth accepts a bearer token in the Authorization header or the
 // httpOnly "token" cookie set at login.
@@ -28,13 +32,14 @@ func RequireAuth(jwt *auth.JWTManager) gin.HandlerFunc {
 			return
 		}
 
-		userID, err := jwt.Verify(tokenString)
+		identity, err := jwt.Verify(tokenString)
 		if err != nil {
 			abortUnauthorized(c, "Invalid or expired token")
 			return
 		}
 
-		c.Set(UserIDKey, userID)
+		c.Set(UserIDKey, identity.UserID)
+		c.Set(RoleKey, identity.Role)
 		c.Next()
 	}
 }
@@ -47,4 +52,8 @@ func abortUnauthorized(c *gin.Context, message string) {
 
 func CurrentUserID(c *gin.Context) uint {
 	return c.GetUint(UserIDKey)
+}
+
+func IsAdmin(c *gin.Context) bool {
+	return c.GetString(RoleKey) == string(models.RoleAdmin)
 }

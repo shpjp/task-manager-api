@@ -17,10 +17,19 @@ var (
 type AuthService struct {
 	users *repository.UserRepository
 	jwt   *auth.JWTManager
+	// adminEmails are promoted to the admin role at signup/login.
+	adminEmails map[string]bool
 }
 
-func NewAuthService(users *repository.UserRepository, jwt *auth.JWTManager) *AuthService {
-	return &AuthService{users: users, jwt: jwt}
+func NewAuthService(users *repository.UserRepository, jwt *auth.JWTManager, adminEmails []string) *AuthService {
+	emails := make(map[string]bool, len(adminEmails))
+	for _, email := range adminEmails {
+		email = strings.ToLower(strings.TrimSpace(email))
+		if email != "" {
+			emails[email] = true
+		}
+	}
+	return &AuthService{users: users, jwt: jwt, adminEmails: emails}
 }
 
 func (s *AuthService) Signup(name, email, password string) (*models.User, string, error) {
@@ -37,16 +46,22 @@ func (s *AuthService) Signup(name, email, password string) (*models.User, string
 		return nil, "", err
 	}
 
+	role := models.RoleUser
+	if s.adminEmails[email] {
+		role = models.RoleAdmin
+	}
+
 	user := &models.User{
 		Name:         strings.TrimSpace(name),
 		Email:        email,
 		PasswordHash: hash,
+		Role:         role,
 	}
 	if err := s.users.Create(user); err != nil {
 		return nil, "", err
 	}
 
-	token, err := s.jwt.Generate(user.ID)
+	token, err := s.jwt.Generate(user.ID, string(user.Role))
 	if err != nil {
 		return nil, "", err
 	}
@@ -68,7 +83,15 @@ func (s *AuthService) Login(email, password string) (*models.User, string, error
 		return nil, "", ErrInvalidCredentials
 	}
 
-	token, err := s.jwt.Generate(user.ID)
+	// Promote existing accounts that were added to ADMIN_EMAILS later.
+	if s.adminEmails[email] && user.Role != models.RoleAdmin {
+		user.Role = models.RoleAdmin
+		if err := s.users.Update(user); err != nil {
+			return nil, "", err
+		}
+	}
+
+	token, err := s.jwt.Generate(user.ID, string(user.Role))
 	if err != nil {
 		return nil, "", err
 	}

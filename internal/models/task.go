@@ -28,4 +28,7 @@ type Task struct {
 	DueDate     *time.Time   `json:"due_date"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
+
+	// Owner is only preloaded for admin "all users" listings.
+	Owner *User `gorm:"foreignKey:UserID" json:"owner,omitempty"`
 }

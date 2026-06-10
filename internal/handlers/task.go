@@ -28,6 +28,13 @@ func NewTaskHandler(service *services.TaskService) *TaskHandler {
 	return &TaskHandler{service: service}
 }
 
+func actor(c *gin.Context) services.Actor {
+	return services.Actor{
+		UserID: middleware.CurrentUserID(c),
+		Admin:  middleware.IsAdmin(c),
+	}
+}
+
 // nullableTime distinguishes `"due_date": null` (clear the date) from the
 // field being absent (leave unchanged) in PATCH bodies.
 type nullableTime struct {
@@ -73,7 +80,7 @@ func (h *TaskHandler) Create(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.Create(middleware.CurrentUserID(c), services.CreateTaskInput{
+	task, err := h.service.Create(actor(c), services.CreateTaskInput{
 		Title:       req.Title,
 		Description: req.Description,
 		Status:      req.Status,
@@ -93,7 +100,12 @@ func (h *TaskHandler) List(c *gin.Context) {
 		return
 	}
 
-	tasks, total, err := h.service.List(middleware.CurrentUserID(c), filter)
+	if filter.AllUsers && !middleware.IsAdmin(c) {
+		respondError(c, http.StatusForbidden, "FORBIDDEN", "Only admins can view all users' tasks")
+		return
+	}
+
+	tasks, total, err := h.service.List(actor(c), filter)
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, "INTERNAL", "Failed to list tasks")
 		return
@@ -115,7 +127,7 @@ func (h *TaskHandler) Get(c *gin.Context) {
 		return
 	}
 
-	task, err := h.service.Get(middleware.CurrentUserID(c), taskID)
+	task, err := h.service.Get(actor(c), taskID)
 	if errors.Is(err, repository.ErrNotFound) {
 		respondError(c, http.StatusNotFound, "NOT_FOUND", "Task not found")
 		return
@@ -153,7 +165,7 @@ func (h *TaskHandler) Update(c *gin.Context) {
 		}
 	}
 
-	task, err := h.service.Update(middleware.CurrentUserID(c), taskID, input)
+	task, err := h.service.Update(actor(c), taskID, input)
 	if errors.Is(err, repository.ErrNotFound) {
 		respondError(c, http.StatusNotFound, "NOT_FOUND", "Task not found")
 		return
@@ -171,7 +183,7 @@ func (h *TaskHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	err := h.service.Delete(middleware.CurrentUserID(c), taskID)
+	err := h.service.Delete(actor(c), taskID)
 	if errors.Is(err, repository.ErrNotFound) {
 		respondError(c, http.StatusNotFound, "NOT_FOUND", "Task not found")
 		return
@@ -181,6 +193,28 @@ func (h *TaskHandler) Delete(c *gin.Context) {
 		return
 	}
 	c.Status(http.StatusNoContent)
+}
+
+// Activity returns the change history for a task.
+func (h *TaskHandler) Activity(c *gin.Context) {
+	taskID, ok := parseID(c)
+	if !ok {
+		return
+	}
+
+	activities, err := h.service.ListActivity(actor(c), taskID)
+	if errors.Is(err, repository.ErrNotFound) {
+		respondError(c, http.StatusNotFound, "NOT_FOUND", "Task not found")
+		return
+	}
+	if err != nil {
+		respondError(c, http.StatusInternalServerError, "INTERNAL", "Failed to fetch activity")
+		return
+	}
+	if activities == nil {
+		activities = []models.TaskActivity{}
+	}
+	respondData(c, http.StatusOK, activities)
 }
 
 func parseID(c *gin.Context) (uint, bool) {
@@ -194,12 +228,13 @@ func parseID(c *gin.Context) (uint, bool) {
 
 func parseTaskFilter(c *gin.Context) (repository.TaskFilter, bool) {
 	filter := repository.TaskFilter{
-		Status: c.Query("status"),
-		Search: c.Query("search"),
-		SortBy: c.DefaultQuery("sort_by", "created_at"),
-		Order:  c.DefaultQuery("order", "desc"),
-		Page:   1,
-		Limit:  defaultPageSize,
+		Status:   c.Query("status"),
+		Search:   c.Query("search"),
+		SortBy:   c.DefaultQuery("sort_by", "created_at"),
+		Order:    c.DefaultQuery("order", "desc"),
+		Page:     1,
+		Limit:    defaultPageSize,
+		AllUsers: c.Query("scope") == "all",
 	}
 
 	if filter.Status != "" && filter.Status != "todo" && filter.Status != "in_progress" && filter.Status != "done" {

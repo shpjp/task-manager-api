@@ -16,6 +16,8 @@ type TaskFilter struct {
 	Order  string // asc | desc
 	Page   int
 	Limit  int
+	// AllUsers lists every user's tasks (admin only) and preloads owners.
+	AllUsers bool
 }
 
 type TaskRepository struct {
@@ -42,6 +44,19 @@ func (r *TaskRepository) FindByID(userID, taskID uint) (*models.Task, error) {
 	return &task, nil
 }
 
+// FindByIDAny looks a task up regardless of owner (admin read access).
+func (r *TaskRepository) FindByIDAny(taskID uint) (*models.Task, error) {
+	var task models.Task
+	err := r.db.Preload("Owner").First(&task, taskID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
 func (r *TaskRepository) Update(task *models.Task) error {
 	return r.db.Save(task).Error
 }
@@ -58,7 +73,12 @@ func (r *TaskRepository) Delete(userID, taskID uint) error {
 }
 
 func (r *TaskRepository) List(userID uint, filter TaskFilter) ([]models.Task, int64, error) {
-	query := r.db.Model(&models.Task{}).Where("user_id = ?", userID)
+	query := r.db.Model(&models.Task{})
+	if filter.AllUsers {
+		query = query.Preload("Owner")
+	} else {
+		query = query.Where("user_id = ?", userID)
+	}
 
 	if filter.Status != "" {
 		query = query.Where("status = ?", filter.Status)
