@@ -9,7 +9,12 @@ import type {
   User,
 } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+// Strip trailing slashes so `https://api.example.com/` + `/auth/signup`
+// doesn't become `https://api.example.com//auth/signup` (404 on the API).
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080").replace(
+  /\/+$/,
+  ""
+);
 
 const TOKEN_KEY = "task-manager-token";
 
