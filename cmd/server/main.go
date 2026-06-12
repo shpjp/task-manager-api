@@ -35,8 +35,11 @@ func main() {
 		&models.User{},
 		&models.Task{},
 		&models.TaskActivity{},
-		&models.Attachment{},
 	); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := config.MigrateAttachments(config.DB); err != nil {
 		log.Fatal(err)
 	}
 
