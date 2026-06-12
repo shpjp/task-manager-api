@@ -105,7 +105,6 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
         </div>
         <div className="w-full max-w-sm">
           <div className="mb-8 flex flex-col items-center lg:items-start">
-            <BrandLogo size="lg" />
             <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
               {mode === "signup"
                 ? "Join your team. Assign, complete, ship."
