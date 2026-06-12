@@ -50,7 +50,7 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Already logged in (e.g. after a refresh) — go straight to tasks.
+  // Already logged in (e.g. after a refresh). Go straight to tasks.
   useEffect(() => {
     if (!initializing && user) router.replace("/tasks");
   }, [initializing, user, router]);
@@ -99,8 +99,8 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
 
   return (
     <AuthBackground>
-      <main className="relative flex flex-1 items-center justify-center px-4 py-8 lg:px-10 lg:py-6">
-        <div className="absolute right-4 top-4 z-10 lg:hidden">
+      <main className="relative flex flex-1 items-center justify-center px-4 py-12 lg:px-10">
+        <div className="absolute right-4 top-4 lg:hidden">
           <ThemeToggle />
         </div>
         <div className="w-full max-w-sm">
@@ -108,15 +108,15 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
             <BrandLogo size="lg" />
             <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
               {mode === "signup"
-                ? "Join your team — assign, complete, ship."
-                : "Welcome back — pick up where you left off."}
+                ? "Join your team. Assign, complete, ship."
+                : "Welcome back. Pick up where you left off."}
             </p>
           </div>
 
           <form
             onSubmit={handleSubmit}
             noValidate
-            className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm"
+            className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)]/90 p-6 shadow-lg backdrop-blur-md"
           >
           {fields.map((field) => (
             <div key={field.name}>

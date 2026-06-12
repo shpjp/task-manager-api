@@ -156,7 +156,8 @@ body {
   .auth-grid-drift,
   .auth-particle,
   .auth-card-float,
-  .marquee-track {
+  .marquee-track,
+  .marquee-to-right {
     animation: none;
   }
 }
@@ -175,6 +176,42 @@ body {
   animation: marquee-left linear infinite;
 }
 
+.marquee-to-right {
+  animation-name: marquee-right;
+}
+
+@keyframes marquee-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 .marquee-reverse {
   animation-direction: reverse;
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+/* Full-viewport marquee band, soft vertical fade only */
+.auth-marquee-full {
+  width: 100%;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 22%,
+    black 78%,
+    transparent 100%
+  );
+}
+
+/* Foreground panels blur the marquee scrolling underneath */
+.auth-panel-blur {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

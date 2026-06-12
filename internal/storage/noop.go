@@ -5,7 +5,7 @@ import (
 	"mime/multipart"
 )
 
-// NoopProvider is used in tests — returns fake URLs without calling Cloudinary.
+// NoopProvider is used in tests. Returns fake URLs without calling Cloudinary.
 type NoopProvider struct{}
 
 func (NoopProvider) Upload(file *multipart.FileHeader) (*UploadResult, error) {
