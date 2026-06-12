@@ -17,7 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "tasktheteam",
   description: "Assign tasks, hit deadlines, and ship as a team",
-  icons: { icon: "/logo.png" },
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: "/favicon.png",
+  },
 };
 
 // Applies the persisted theme before first paint to avoid a flash.
