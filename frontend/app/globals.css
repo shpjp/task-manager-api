@@ -43,3 +43,113 @@ body {
     linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
     linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
 }
+
+/* Auth page motion */
+@keyframes auth-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -24px) scale(1.05);
+  }
+  66% {
+    transform: translate(-20px, 16px) scale(0.97);
+  }
+}
+
+@keyframes auth-grid-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 48px 48px;
+  }
+}
+
+@keyframes auth-particle-drift {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(12px, -18px);
+    opacity: 1;
+  }
+}
+
+@keyframes auth-card-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.auth-orb {
+  animation: auth-float 14s ease-in-out infinite;
+}
+
+.auth-orb-2 {
+  animation-delay: -4s;
+  animation-duration: 18s;
+}
+
+.auth-orb-3 {
+  animation-delay: -7s;
+  animation-duration: 16s;
+}
+
+.auth-orb-4 {
+  animation-delay: -2s;
+  animation-duration: 12s;
+}
+
+.auth-grid-drift {
+  animation: auth-grid-drift 20s linear infinite;
+}
+
+.auth-particle {
+  animation: auth-particle-drift 6s ease-in-out infinite;
+}
+
+.auth-particle-2 {
+  animation-delay: -1.5s;
+  animation-duration: 7s;
+}
+
+.auth-particle-3 {
+  animation-delay: -3s;
+  animation-duration: 8s;
+}
+
+.auth-particle-4 {
+  animation-delay: -2s;
+  animation-duration: 5s;
+}
+
+.auth-card-float {
+  animation: auth-card-bob 5s ease-in-out infinite;
+}
+
+.auth-card-float-2 {
+  animation-delay: -1.5s;
+  animation-duration: 6s;
+}
+
+.auth-card-float-3 {
+  animation-delay: -0.8s;
+  animation-duration: 4.5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-orb,
+  .auth-grid-drift,
+  .auth-particle,
+  .auth-card-float {
+    animation: none;
+  }
+}
