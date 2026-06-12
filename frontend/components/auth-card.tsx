@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { AuthBackground } from "./auth-background";
 import { ThemeToggle } from "./theme-toggle";
 import { FieldError, FullPageSpinner, Spinner } from "./ui";
 
@@ -96,25 +97,26 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
   }
 
   return (
-    <main className="relative flex flex-1 items-center justify-center px-4 py-12">
-      <div className="absolute right-4 top-4">
-        <ThemeToggle />
-      </div>
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
-            Taskflow
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {mode === "signup" ? "Create your account" : "Welcome back"}
-          </p>
+    <AuthBackground>
+      <main className="relative flex flex-1 items-center justify-center px-4 py-12 lg:px-10">
+        <div className="absolute right-4 top-4 lg:hidden">
+          <ThemeToggle />
         </div>
+        <div className="w-full max-w-sm">
+          <div className="mb-8 text-center lg:text-left">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
+              Taskflow
+            </h1>
+            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              {mode === "signup" ? "Create your account" : "Welcome back"}
+            </p>
+          </div>
 
-        <form
-          onSubmit={handleSubmit}
-          noValidate
-          className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-        >
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-sm"
+          >
           {fields.map((field) => (
             <div key={field.name}>
               <label
@@ -132,7 +134,7 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
                 onChange={(e) =>
                   setValues((v) => ({ ...v, [field.name]: e.target.value }))
                 }
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:ring-indigo-900"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:ring-indigo-900"
               />
               <FieldError message={errors[field.name]} />
             </div>
@@ -154,7 +156,7 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
           </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-4 text-center text-sm text-neutral-500 dark:text-neutral-400 lg:text-left">
           {mode === "signup" ? (
             <>
               Already have an account?{" "}
@@ -177,7 +179,8 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
             </>
           )}
         </p>
-      </div>
-    </main>
+        </div>
+      </main>
+    </AuthBackground>
   );
 }

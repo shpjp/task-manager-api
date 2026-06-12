@@ -18,7 +18,9 @@ import type {
   TaskInput,
   TaskStatus,
 } from "@/lib/types";
+import { AppSidebar } from "@/components/app-sidebar";
 import { Pagination } from "@/components/pagination";
+import { TaskCalendar } from "@/components/task-calendar";
 import { TaskFormModal } from "@/components/task-form-modal";
 import { TaskItem } from "@/components/task-item";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -231,7 +233,7 @@ function TasksPageInner() {
   const hasActiveFilters = Boolean(filters.status || filters.search);
 
   const selectClass =
-    "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200";
+    "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200";
 
   const newTaskButton = (
     <button
@@ -246,38 +248,51 @@ function TasksPageInner() {
   );
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold tracking-tight text-slate-800 dark:text-slate-100">
-              Taskflow
-            </h1>
-            {isAdmin && (
-              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                admin
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <span className="hidden text-sm text-slate-500 sm:inline dark:text-slate-400">
-              {user.name}
-            </span>
-            <button
-              onClick={async () => {
-                await logout();
-                router.replace("/login");
-              }}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              Log out
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="flex min-h-full flex-1 bg-[var(--background)]">
+      <AppSidebar
+        userName={user.name}
+        isAdmin={isAdmin}
+        totalTasks={meta?.total ?? 0}
+        activeStatus={filters.status}
+        scopeAll={filters.scopeAll}
+        onFilterStatus={(status) => setFilter({ status, scopeAll: false })}
+        onToggleScopeAll={() => setFilter({ scopeAll: !filters.scopeAll })}
+        onNewTask={() => {
+          setEditingTask(null);
+          setModalOpen(true);
+        }}
+        onLogout={async () => {
+          await logout();
+          router.replace("/login");
+        }}
+      />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="border-b border-[var(--border)] bg-[var(--surface)] lg:hidden">
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <span className="flex size-7 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">
+                T
+              </span>
+              <h1 className="text-base font-bold tracking-tight">Taskflow</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                onClick={async () => {
+                  await logout();
+                  router.replace("/login");
+                }}
+                className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-xs font-medium text-neutral-600 dark:text-neutral-400"
+              >
+                Log out
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex min-w-0 flex-1">
+          <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <svg
@@ -292,7 +307,7 @@ function TasksPageInner() {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search tasks by title…"
               aria-label="Search tasks by title"
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-indigo-900"
+              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:ring-indigo-900"
             />
           </div>
           {newTaskButton}
@@ -325,13 +340,13 @@ function TasksPageInner() {
           <button
             onClick={() => setFilter({ order: filters.order === "asc" ? "desc" : "asc" })}
             aria-label={`Order ${filters.order === "asc" ? "ascending" : "descending"}`}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900"
           >
             {filters.order === "asc" ? "↑ Asc" : "↓ Desc"}
           </button>
 
           {isAdmin && (
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200">
               <input
                 type="checkbox"
                 checked={filters.scopeAll}
@@ -405,7 +420,11 @@ function TasksPageInner() {
             )}
           </>
         )}
-      </main>
+          </main>
+
+          <TaskCalendar tasks={tasks} />
+        </div>
+      </div>
 
       {modalOpen && (
         <TaskFormModal

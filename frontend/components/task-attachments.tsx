@@ -75,7 +75,7 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
           type="button"
           onClick={() => fileInput.current?.click()}
           disabled={uploading}
-          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900"
         >
           {uploading ? <Spinner className="size-3" /> : "+"} Upload file
         </button>
@@ -101,7 +101,7 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
           {attachments.map((attachment) => (
             <li
               key={attachment.id}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800"
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-900"
             >
               <a
                 href={api.attachmentDownloadUrl(taskId, attachment.id)}

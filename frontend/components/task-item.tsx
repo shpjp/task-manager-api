@@ -5,7 +5,7 @@ import type { Task } from "@/lib/types";
 const PRIORITY_STYLES: Record<Task["priority"], string> = {
   high: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
   medium: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  low: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  low: "bg-slate-100 text-slate-600 dark:bg-neutral-900 dark:text-neutral-300",
 };
 
 const STATUS_LABELS: Record<Task["status"], string> = {
@@ -15,7 +15,7 @@ const STATUS_LABELS: Record<Task["status"], string> = {
 };
 
 const STATUS_STYLES: Record<Task["status"], string> = {
-  todo: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  todo: "bg-slate-100 text-slate-600 dark:bg-neutral-900 dark:text-neutral-300",
   in_progress: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
   done: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
 };
@@ -52,7 +52,7 @@ export function TaskItem({
   const due = task.due_date ? formatDueDate(task.due_date) : null;
 
   return (
-    <li className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+    <li className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-neutral-800 dark:bg-neutral-950">
       <input
         type="checkbox"
         checked={done}
@@ -113,7 +113,7 @@ export function TaskItem({
           <button
             onClick={() => onEdit(task)}
             disabled={busy}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40 dark:hover:bg-neutral-900 dark:hover:text-neutral-200"
             aria-label={`Edit ${task.title}`}
           >
             <svg className="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
