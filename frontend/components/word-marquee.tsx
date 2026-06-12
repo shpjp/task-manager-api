@@ -1,18 +1,20 @@
 "use client";
 
 const WORDS = [
-  "deadlines",
-  "tickets",
+  "priority",
+  "due date",
+  "team work",
   "tasks",
+  "calendar",
+  "upcoming",
+  "weekend",
+  "ship",
+  "collaborate",
   "assign",
   "complete",
-  "todo",
-  "weekend",
-  "weekday",
-  "ship",
-  "sprint",
   "backlog",
   "standup",
+  "deadlines",
 ];
 
 interface WordMarqueeProps {
@@ -27,14 +29,11 @@ export function WordMarquee({
   className = "",
 }: WordMarqueeProps) {
   const duration =
-    speed === "slow" ? "38s" : speed === "fast" ? "18s" : "26s";
+    speed === "slow" ? "40s" : speed === "fast" ? "22s" : "30s";
   const track = [...WORDS, ...WORDS];
 
   return (
-    <div
-      className={`marquee-mask overflow-hidden ${className}`}
-      aria-hidden
-    >
+    <div className={`overflow-hidden ${className}`} aria-hidden>
       <div
         className={`marquee-track flex w-max gap-3 ${reverse ? "marquee-reverse" : ""}`}
         style={{ animationDuration: duration }}
@@ -42,7 +41,7 @@ export function WordMarquee({
         {track.map((word, i) => (
           <span
             key={`${word}-${i}`}
-            className="marquee-pill shrink-0 rounded-full border border-[var(--border)] bg-[var(--surface)]/80 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--brand)] backdrop-blur-sm dark:bg-neutral-950/70"
+            className="shrink-0 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--brand)]"
           >
             {word}
           </span>

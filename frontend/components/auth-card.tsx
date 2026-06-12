@@ -99,8 +99,8 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
 
   return (
     <AuthBackground>
-      <main className="relative flex flex-1 items-center justify-center px-4 py-12 lg:px-10">
-        <div className="absolute right-4 top-4 lg:hidden">
+      <main className="relative flex flex-1 items-center justify-center px-4 py-8 lg:px-10 lg:py-6">
+        <div className="absolute right-4 top-4 z-10 lg:hidden">
           <ThemeToggle />
         </div>
         <div className="w-full max-w-sm">
