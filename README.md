@@ -1,4 +1,4 @@
-# Taskflow — Task Management Application
+# tasktheteam — Task Management Application
 
 A full-stack task manager with a **Go (Gin + GORM)** REST API, a **Next.js** frontend, and **PostgreSQL** persistence.
 
@@ -20,7 +20,7 @@ A full-stack task manager with a **Go (Gin + GORM)** REST API, a **Next.js** fro
 - **Admin role** — emails listed in `ADMIN_EMAILS` get read-only access to every user's tasks ("All users" toggle in the UI)
 - **Real-time updates** — task changes stream live over Server-Sent Events
 - **Optimistic UI** — complete/delete update instantly and roll back on failure
-- **Attachments** — upload images/documents to tasks (5 MB limit, type allowlist)
+- **Attachments** — upload images/documents to tasks via Cloudinary (5 MB limit, type allowlist)
 - **Activity log** — per-task history of every change
 - **Dockerized setup** — one command brings up the whole stack
 - **CI pipeline** — GitHub Actions builds, vets, lints and tests on every push
@@ -76,7 +76,10 @@ Backend (`.env`, see `.env.example`):
 | `FRONTEND_ORIGIN` | Allowed CORS origin | `http://localhost:3000` |
 | `COOKIE_SECURE` | Set `true` behind HTTPS | `false` |
 | `ADMIN_EMAILS` | Comma-separated emails promoted to admin | — |
-| `UPLOAD_DIR` | Attachment storage directory | `./uploads` |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name (**required**) | — |
+| `CLOUDINARY_API_KEY` | Cloudinary API key (**required**) | — |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret (**required**) | — |
+| `CLOUDINARY_FOLDER` | Upload folder in Cloudinary | `tasktheteam` |
 | `MAX_UPLOAD_MB` | Max attachment size (MB) | `5` |
 
 Frontend (`frontend/.env.local`, see `frontend/.env.example`):
@@ -101,9 +104,8 @@ All `/tasks` routes require authentication (`Authorization: Bearer <token>` or t
 | `PATCH` | `/tasks/:id` | Partially update a task (`"due_date": null` clears it) |
 | `DELETE` | `/tasks/:id` | Delete a task |
 | `GET` | `/tasks/:id/activity` | Change history for a task |
-| `POST` | `/tasks/:id/attachments` | Upload a file (multipart field `file`) |
-| `GET` | `/tasks/:id/attachments` | List attachments |
-| `GET` | `/tasks/:id/attachments/:attachmentID/download` | Download an attachment |
+| `POST` | `/tasks/:id/attachments` | Upload a file to Cloudinary (multipart field `file`) |
+| `GET` | `/tasks/:id/attachments` | List attachments (includes public Cloudinary URL) |
 | `DELETE` | `/tasks/:id/attachments/:attachmentID` | Delete an attachment |
 | `GET` | `/events` | Live task events (SSE, cookie auth) |
 | `GET` | `/health` | Health check |
