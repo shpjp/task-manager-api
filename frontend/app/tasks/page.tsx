@@ -19,7 +19,9 @@ import type {
   TaskStatus,
 } from "@/lib/types";
 import { AppSidebar } from "@/components/app-sidebar";
+import { BrandLogo } from "@/components/brand-logo";
 import { MobileFilterNav } from "@/components/mobile-filter-nav";
+import { WordMarquee } from "@/components/word-marquee";
 import { Pagination } from "@/components/pagination";
 import { TaskCalendar } from "@/components/task-calendar";
 import { TaskFormModal } from "@/components/task-form-modal";
@@ -234,7 +236,7 @@ function TasksPageInner() {
   const hasActiveFilters = Boolean(filters.status || filters.search);
 
   const selectClass =
-    "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-indigo-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200";
+    "rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-[var(--brand)] dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200";
 
   const newTaskButton = (
     <button
@@ -242,7 +244,7 @@ function TasksPageInner() {
         setEditingTask(null);
         setModalOpen(true);
       }}
-      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 sm:shrink-0"
+      className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)] sm:shrink-0"
     >
       + New task
     </button>
@@ -271,12 +273,7 @@ function TasksPageInner() {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="border-b border-[var(--border)] bg-[var(--surface)] lg:hidden">
           <div className="flex items-center justify-between gap-4 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">
-                T
-              </span>
-              <h1 className="text-base font-bold tracking-tight">Taskflow</h1>
-            </div>
+            <BrandLogo size="sm" showWordmark={false} />
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <button
@@ -300,6 +297,10 @@ function TasksPageInner() {
           onToggleScopeAll={() => setFilter({ scopeAll: !filters.scopeAll })}
         />
 
+        <div className="hidden border-b border-[var(--border)] py-2 md:block xl:hidden">
+          <WordMarquee speed="fast" />
+        </div>
+
         <div className="flex min-w-0 flex-1 flex-col xl:flex-row">
           <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
         <TaskCalendar tasks={tasks} layout="inline" />
@@ -318,7 +319,7 @@ function TasksPageInner() {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search tasks by title…"
               aria-label="Search tasks by title"
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:ring-indigo-900"
+              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-sky-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:ring-sky-900"
             />
           </div>
           {newTaskButton}
@@ -362,7 +363,7 @@ function TasksPageInner() {
                 type="checkbox"
                 checked={filters.scopeAll}
                 onChange={(e) => setFilter({ scopeAll: e.target.checked })}
-                className="size-4 accent-indigo-600"
+                className="size-4 accent-[var(--brand)]"
               />
               All users
             </label>
@@ -374,7 +375,7 @@ function TasksPageInner() {
                 setSearchInput("");
                 setFilter({ status: "", search: "" });
               }}
-              className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              className="text-sm font-medium text-[var(--brand)] hover:underline"
             >
               Clear filters
             </button>

@@ -8,14 +8,20 @@
   --surface: #ffffff;
   --surface-muted: #f1f5f9;
   --border: #e2e8f0;
+  --brand: #52a8e0;
+  --brand-dark: #3d8ec7;
+  --brand-glow: rgb(82 168 224 / 0.35);
 }
 
 .dark {
-  --background: #000000;
+  --background: #0a0a0a;
   --foreground: #fafafa;
-  --surface: #0a0a0a;
-  --surface-muted: #111111;
+  --surface: #111111;
+  --surface-muted: #161616;
   --border: #262626;
+  --brand: #6bb8ea;
+  --brand-dark: #52a8e0;
+  --brand-glow: rgb(107 184 234 / 0.2);
 }
 
 @theme inline {
@@ -149,7 +155,30 @@ body {
   .auth-orb,
   .auth-grid-drift,
   .auth-particle,
-  .auth-card-float {
+  .auth-card-float,
+  .marquee-track {
     animation: none;
   }
+}
+
+/* Word marquee */
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee-left linear infinite;
+}
+
+.marquee-reverse {
+  animation-direction: reverse;
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
