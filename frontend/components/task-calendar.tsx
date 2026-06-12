@@ -114,15 +114,15 @@ function CalendarPanel({
                 onClick={() => onSelectDate?.(key)}
                 className={`relative flex aspect-square items-center justify-center rounded-lg text-xs transition ${
                   isToday
-                    ? "bg-indigo-600 font-semibold text-white"
+                    ? "bg-[var(--brand)] font-semibold text-white"
                     : count > 0
-                      ? "bg-indigo-100 font-medium text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300"
+                      ? "bg-sky-100 font-medium text-sky-800 dark:bg-sky-950 dark:text-sky-300"
                       : "text-neutral-600 hover:bg-[var(--surface)] dark:text-neutral-400 dark:hover:bg-neutral-800"
                 }`}
               >
                 {day}
                 {count > 1 && (
-                  <span className="absolute bottom-0.5 size-1 rounded-full bg-indigo-500" />
+                  <span className="absolute bottom-0.5 size-1 rounded-full bg-[var(--brand)]" />
                 )}
               </button>
             );

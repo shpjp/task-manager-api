@@ -55,7 +55,7 @@ export function TaskActivityLog({ taskId }: { taskId: number }) {
         <ol className="max-h-40 space-y-2 overflow-y-auto pr-1">
           {activity.map((entry) => (
             <li key={entry.id} className="flex gap-2 text-xs">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-indigo-400" />
+              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-[var(--brand)]" />
               <div className="min-w-0">
                 <p className="text-slate-600 dark:text-slate-300">{entry.detail}</p>
                 <p className="text-slate-400 dark:text-slate-500">

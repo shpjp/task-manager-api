@@ -82,7 +82,7 @@ export function TaskItem({
             {task.priority}
           </span>
           {task.owner && (
-            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+            <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300">
               {task.owner.email}
             </span>
           )}

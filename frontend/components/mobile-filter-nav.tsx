@@ -34,7 +34,7 @@ export function MobileFilterNav({
             onClick={() => onFilterStatus(item.status)}
             className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
               active
-                ? "bg-indigo-600 text-white"
+                ? "bg-[var(--brand)] text-white"
                 : "border border-[var(--border)] bg-[var(--surface)] text-neutral-600 dark:text-neutral-300"
             }`}
           >
@@ -47,7 +47,7 @@ export function MobileFilterNav({
           onClick={onToggleScopeAll}
           className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
             scopeAll
-              ? "bg-indigo-600 text-white"
+              ? "bg-[var(--brand)] text-white"
               : "border border-[var(--border)] bg-[var(--surface)] text-neutral-600 dark:text-neutral-300"
           }`}
         >

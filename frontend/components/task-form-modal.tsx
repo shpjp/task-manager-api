@@ -101,7 +101,7 @@ export function TaskFormModal({
   }
 
   const inputClass =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:ring-indigo-900";
+    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-sky-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:ring-sky-900";
 
   const labelClass = "mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
@@ -228,7 +228,7 @@ export function TaskFormModal({
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--brand-dark)] disabled:opacity-60"
             >
               {saving && <Spinner className="size-4 border-white/40 border-t-white" />}
               {task ? "Save changes" : "Create task"}
