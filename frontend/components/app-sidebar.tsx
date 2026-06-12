@@ -36,7 +36,7 @@ export function AppSidebar({
   onLogout,
 }: AppSidebarProps) {
   return (
-    <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface)] lg:flex">
+    <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface)] lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto lg:flex">
       <div className="border-b border-[var(--border)] px-4 py-4">
         <BrandLogo size="sm" />
         {isAdmin && (
