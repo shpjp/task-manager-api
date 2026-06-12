@@ -11,10 +11,15 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+const ACCEPT =
+  ".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.csv,.doc,.docx,.xls,.xlsx";
+
 export function TaskAttachments({ taskId }: { taskId: number }) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -36,11 +41,7 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
     };
   }, [taskId]);
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-
+  async function uploadFile(file: File) {
     setUploading(true);
     setError("");
     try {
@@ -50,6 +51,25 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
       setError(err instanceof api.ApiError ? err.message : "Upload failed");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    await uploadFile(file);
+  }
+
+  async function handleDownload(attachment: Attachment) {
+    setDownloadingId(attachment.id);
+    setError("");
+    try {
+      await api.downloadAttachment(taskId, attachment.id, attachment.file_name);
+    } catch (err) {
+      setError(err instanceof api.ApiError ? err.message : "Download failed");
+    } finally {
+      setDownloadingId(null);
     }
   }
 
@@ -65,6 +85,27 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
     }
   }
 
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  }
+
+  async function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || uploading) return;
+    await uploadFile(file);
+  }
+
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
@@ -77,25 +118,76 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
           disabled={uploading}
           className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-200 dark:hover:bg-neutral-900"
         >
-          {uploading ? <Spinner className="size-3" /> : "+"} Upload file
+          {uploading ? <Spinner className="size-3" /> : "+"} Browse
         </button>
         <input
           ref={fileInput}
           type="file"
           hidden
-          accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.md,.csv,.doc,.docx,.xls,.xlsx"
+          accept={ACCEPT}
           onChange={handleUpload}
         />
       </div>
 
-      {error && <p className="mb-2 text-xs font-medium text-red-600 dark:text-red-400">{error}</p>}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => !uploading && fileInput.current?.click()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            fileInput.current?.click();
+          }
+        }}
+        className={`mb-3 cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 text-center transition ${
+          dragOver
+            ? "border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-950/40"
+            : "border-slate-300 bg-slate-50/80 hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/20"
+        } ${uploading ? "pointer-events-none opacity-60" : ""}`}
+      >
+        {uploading ? (
+          <div className="flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-neutral-400">
+            <Spinner className="size-4" />
+            Uploading…
+          </div>
+        ) : (
+          <>
+            <svg
+              className="mx-auto mb-2 size-6 text-slate-400 dark:text-neutral-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+              />
+            </svg>
+            <p className="text-xs font-medium text-slate-600 dark:text-neutral-300">
+              Drag & drop a file here
+            </p>
+            <p className="mt-0.5 text-[10px] text-slate-400 dark:text-neutral-500">
+              or click to browse · PNG, PDF, DOC, etc.
+            </p>
+          </>
+        )}
+      </div>
+
+      {error && (
+        <p className="mb-2 text-xs font-medium text-red-600 dark:text-red-400">{error}</p>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-3">
           <Spinner className="size-4" />
         </div>
       ) : attachments.length === 0 ? (
-        <p className="text-xs text-slate-400 dark:text-slate-500">No attachments yet.</p>
+        <p className="text-xs text-slate-400 dark:text-neutral-500">No attachments yet.</p>
       ) : (
         <ul className="space-y-1.5">
           {attachments.map((attachment) => (
@@ -103,13 +195,15 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
               key={attachment.id}
               className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-900"
             >
-              <a
-                href={api.attachmentDownloadUrl(taskId, attachment.id)}
-                className="min-w-0 flex-1 truncate text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+              <button
+                type="button"
+                onClick={() => handleDownload(attachment)}
+                disabled={downloadingId === attachment.id}
+                className="min-w-0 flex-1 truncate text-left text-xs font-medium text-indigo-600 hover:underline disabled:opacity-60 dark:text-indigo-400"
               >
-                {attachment.file_name}
-              </a>
-              <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">
+                {downloadingId === attachment.id ? "Downloading…" : attachment.file_name}
+              </button>
+              <span className="shrink-0 text-xs text-slate-400 dark:text-neutral-500">
                 {formatSize(attachment.size)}
               </span>
               <button
