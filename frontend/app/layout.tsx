@@ -15,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Taskflow",
-  description: "A simple, fast task manager",
+  title: "tasktheteam",
+  description: "Assign tasks, hit deadlines, and ship as a team",
+  icons: { icon: "/logo.png" },
 };
 
 // Applies the persisted theme before first paint to avoid a flash.

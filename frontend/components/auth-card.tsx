@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { AuthBackground } from "./auth-background";
+import { BrandLogo } from "./brand-logo";
 import { ThemeToggle } from "./theme-toggle";
 import { FieldError, FullPageSpinner, Spinner } from "./ui";
 
@@ -103,12 +104,12 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
           <ThemeToggle />
         </div>
         <div className="w-full max-w-sm">
-          <div className="mb-8 text-center lg:text-left">
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">
-              Taskflow
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-              {mode === "signup" ? "Create your account" : "Welcome back"}
+          <div className="mb-8 flex flex-col items-center lg:items-start">
+            <BrandLogo size="lg" />
+            <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
+              {mode === "signup"
+                ? "Join your team — assign, complete, ship."
+                : "Welcome back — pick up where you left off."}
             </p>
           </div>
 
@@ -134,7 +135,7 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
                 onChange={(e) =>
                   setValues((v) => ({ ...v, [field.name]: e.target.value }))
                 }
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:ring-indigo-900"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-sky-100 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:focus:ring-sky-900"
               />
               <FieldError message={errors[field.name]} />
             </div>
@@ -149,7 +150,7 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
           <button
             type="submit"
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)] disabled:opacity-60"
           >
             {submitting && <Spinner className="size-4 border-white/40 border-t-white" />}
             {mode === "signup" ? "Sign up" : "Log in"}
@@ -162,7 +163,7 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
               Already have an account?{" "}
               <Link
                 href="/login"
-                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                className="font-medium text-[var(--brand)] hover:underline"
               >
                 Log in
               </Link>
@@ -172,7 +173,7 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
               New here?{" "}
               <Link
                 href="/signup"
-                className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                className="font-medium text-[var(--brand)] hover:underline"
               >
                 Create an account
               </Link>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { TaskStatus } from "@/lib/types";
+import { BrandLogo } from "./brand-logo";
 import { ThemeToggle } from "./theme-toggle";
 
 interface AppSidebarProps {
@@ -36,18 +37,13 @@ export function AppSidebar({
 }: AppSidebarProps) {
   return (
     <aside className="hidden w-60 shrink-0 flex-col border-r border-[var(--border)] bg-[var(--surface)] lg:flex">
-      <div className="flex items-center gap-2 border-b border-[var(--border)] px-5 py-5">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white">
-          T
-        </span>
-        <div>
-          <p className="text-sm font-bold tracking-tight">Taskflow</p>
-          {isAdmin && (
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-500">
-              Admin
-            </span>
-          )}
-        </div>
+      <div className="border-b border-[var(--border)] px-4 py-4">
+        <BrandLogo size="sm" />
+        {isAdmin && (
+          <span className="mt-2 inline-block rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--brand-dark)] dark:bg-sky-950 dark:text-[var(--brand)]">
+            Admin
+          </span>
+        )}
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
@@ -62,7 +58,7 @@ export function AppSidebar({
               onClick={() => onFilterStatus(item.status)}
               className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
                 active
-                  ? "bg-indigo-600 text-white"
+                  ? "bg-[var(--brand)] text-white"
                   : "text-neutral-600 hover:bg-[var(--surface-muted)] dark:text-neutral-300 dark:hover:bg-neutral-900"
               }`}
             >
@@ -77,7 +73,7 @@ export function AppSidebar({
             onClick={onToggleScopeAll}
             className={`mt-2 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
               scopeAll
-                ? "bg-indigo-600 text-white"
+                ? "bg-[var(--brand)] text-white"
                 : "text-neutral-600 hover:bg-[var(--surface-muted)] dark:text-neutral-300 dark:hover:bg-neutral-900"
             }`}
           >
@@ -97,7 +93,7 @@ export function AppSidebar({
 
         <button
           onClick={onNewTask}
-          className="mb-3 w-full rounded-lg bg-indigo-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          className="mb-3 w-full rounded-lg bg-[var(--brand)] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)]"
         >
           + New task
         </button>
