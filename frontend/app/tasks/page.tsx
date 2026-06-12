@@ -19,6 +19,7 @@ import type {
   TaskStatus,
 } from "@/lib/types";
 import { AppSidebar } from "@/components/app-sidebar";
+import { MobileFilterNav } from "@/components/mobile-filter-nav";
 import { Pagination } from "@/components/pagination";
 import { TaskCalendar } from "@/components/task-calendar";
 import { TaskFormModal } from "@/components/task-form-modal";
@@ -241,7 +242,7 @@ function TasksPageInner() {
         setEditingTask(null);
         setModalOpen(true);
       }}
-      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 sm:shrink-0"
     >
       + New task
     </button>
@@ -291,8 +292,18 @@ function TasksPageInner() {
           </div>
         </header>
 
-        <div className="flex min-w-0 flex-1">
-          <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
+        <MobileFilterNav
+          activeStatus={filters.status}
+          scopeAll={filters.scopeAll}
+          isAdmin={isAdmin}
+          onFilterStatus={(status) => setFilter({ status, scopeAll: false })}
+          onToggleScopeAll={() => setFilter({ scopeAll: !filters.scopeAll })}
+        />
+
+        <div className="flex min-w-0 flex-1 flex-col xl:flex-row">
+          <main className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <TaskCalendar tasks={tasks} layout="inline" />
+
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <svg
@@ -422,7 +433,7 @@ function TasksPageInner() {
         )}
           </main>
 
-          <TaskCalendar tasks={tasks} />
+          <TaskCalendar tasks={tasks} layout="sidebar" />
         </div>
       </div>
 
