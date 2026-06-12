@@ -18,7 +18,6 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
@@ -59,18 +58,6 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
     e.target.value = "";
     if (!file) return;
     await uploadFile(file);
-  }
-
-  async function handleDownload(attachment: Attachment) {
-    setDownloadingId(attachment.id);
-    setError("");
-    try {
-      await api.downloadAttachment(taskId, attachment.id, attachment.file_name);
-    } catch (err) {
-      setError(err instanceof api.ApiError ? err.message : "Download failed");
-    } finally {
-      setDownloadingId(null);
-    }
   }
 
   async function handleDelete(attachment: Attachment) {
@@ -144,14 +131,14 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
         }}
         className={`mb-3 cursor-pointer rounded-xl border-2 border-dashed px-4 py-5 text-center transition ${
           dragOver
-            ? "border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-950/40"
-            : "border-slate-300 bg-slate-50/80 hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/20"
+            ? "border-[var(--brand)] bg-sky-50 dark:border-[var(--brand)] dark:bg-sky-950/30"
+            : "border-slate-300 bg-slate-50/80 hover:border-[var(--brand)] hover:bg-sky-50/50 dark:border-neutral-700 dark:bg-neutral-900/50 dark:hover:bg-sky-950/20"
         } ${uploading ? "pointer-events-none opacity-60" : ""}`}
       >
         {uploading ? (
           <div className="flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-neutral-400">
             <Spinner className="size-4" />
-            Uploading…
+            Uploading to Cloudinary…
           </div>
         ) : (
           <>
@@ -172,7 +159,7 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
               Drag & drop a file here
             </p>
             <p className="mt-0.5 text-[10px] text-slate-400 dark:text-neutral-500">
-              or click to browse · PNG, PDF, DOC, etc.
+              or click to browse · stored on Cloudinary
             </p>
           </>
         )}
@@ -195,14 +182,14 @@ export function TaskAttachments({ taskId }: { taskId: number }) {
               key={attachment.id}
               className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-900"
             >
-              <button
-                type="button"
-                onClick={() => handleDownload(attachment)}
-                disabled={downloadingId === attachment.id}
-                className="min-w-0 flex-1 truncate text-left text-xs font-medium text-indigo-600 hover:underline disabled:opacity-60 dark:text-indigo-400"
+              <a
+                href={attachment.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-0 flex-1 truncate text-xs font-medium text-[var(--brand)] hover:underline"
               >
-                {downloadingId === attachment.id ? "Downloading…" : attachment.file_name}
-              </button>
+                {attachment.file_name}
+              </a>
               <span className="shrink-0 text-xs text-slate-400 dark:text-neutral-500">
                 {formatSize(attachment.size)}
               </span>

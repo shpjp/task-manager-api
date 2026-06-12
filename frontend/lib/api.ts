@@ -214,58 +214,6 @@ export async function deleteAttachment(taskId: number, attachmentId: number): Pr
   await request<void>(`/tasks/${taskId}/attachments/${attachmentId}`, { method: "DELETE" });
 }
 
-/** Download via fetch so the Bearer token from localStorage is included. */
-export async function downloadAttachment(
-  taskId: number,
-  attachmentId: number,
-  fileName: string
-): Promise<void> {
-  const headers: Record<string, string> = {};
-  const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  let res: Response;
-  try {
-    res = await fetch(
-      `${API_URL}/tasks/${taskId}/attachments/${attachmentId}/download`,
-      { headers, credentials: "include" }
-    );
-  } catch {
-    throw new ApiError(0, "NETWORK_ERROR", "Could not reach the server. Is the API running?");
-  }
-
-  if (!res.ok) {
-    let body: unknown = null;
-    try {
-      body = await res.json();
-    } catch {
-      /* binary or empty */
-    }
-    const err = (body as { error?: { code?: string; message?: string } })?.error;
-    throw new ApiError(
-      res.status,
-      err?.code ?? "UNKNOWN",
-      err?.message ?? "Download failed"
-    );
-  }
-
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.rel = "noopener";
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-/** @deprecated Use downloadAttachment — direct links cannot send the auth header. */
-export function attachmentDownloadUrl(taskId: number, attachmentId: number): string {
-  return `${API_URL}/tasks/${taskId}/attachments/${attachmentId}/download`;
-}
-
 // --- Real-time events (SSE) ---
 
 /**
