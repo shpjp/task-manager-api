@@ -13,7 +13,6 @@ interface AppSidebarProps {
   scopeAll: boolean;
   onFilterStatus: (status: TaskStatus | "") => void;
   onToggleScopeAll: () => void;
-  onNewTask: () => void;
   onLogout: () => void;
 }
 
@@ -32,7 +31,6 @@ export function AppSidebar({
   scopeAll,
   onFilterStatus,
   onToggleScopeAll,
-  onNewTask,
   onLogout,
 }: AppSidebarProps) {
   return (
@@ -90,13 +88,6 @@ export function AppSidebar({
           </p>
           <p className="text-2xl font-bold tabular-nums">{totalTasks}</p>
         </div>
-
-        <button
-          onClick={onNewTask}
-          className="mb-3 w-full rounded-lg bg-[var(--brand)] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--brand-dark)]"
-        >
-          + New task
-        </button>
 
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">

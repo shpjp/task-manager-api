@@ -260,10 +260,6 @@ function TasksPageInner() {
         scopeAll={filters.scopeAll}
         onFilterStatus={(status) => setFilter({ status, scopeAll: false })}
         onToggleScopeAll={() => setFilter({ scopeAll: !filters.scopeAll })}
-        onNewTask={() => {
-          setEditingTask(null);
-          setModalOpen(true);
-        }}
         onLogout={async () => {
           await logout();
           router.replace("/login");
