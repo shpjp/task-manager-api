@@ -29,7 +29,7 @@ export function WordMarquee({
   className = "",
 }: WordMarqueeProps) {
   const duration =
-    speed === "slow" ? "38s" : speed === "fast" ? "18s" : "26s";
+    speed === "slow" ? "20s" : speed === "fast" ? "10s" : "14s";
   const track = [...WORDS, ...WORDS];
 
   return (
