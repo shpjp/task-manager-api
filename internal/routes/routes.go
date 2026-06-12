@@ -42,7 +42,6 @@ func RegisterRoutes(r *gin.Engine, h Handlers, jwt *auth.JWTManager) {
 
 		tasks.POST("/:id/attachments", h.Attachments.Upload)
 		tasks.GET("/:id/attachments", h.Attachments.List)
-		tasks.GET("/:id/attachments/:attachmentID/download", h.Attachments.Download)
 		tasks.DELETE("/:id/attachments/:attachmentID", h.Attachments.Delete)
 	}
 

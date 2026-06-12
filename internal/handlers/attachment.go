@@ -71,28 +71,6 @@ func (h *AttachmentHandler) List(c *gin.Context) {
 	respondData(c, http.StatusOK, attachments)
 }
 
-func (h *AttachmentHandler) Download(c *gin.Context) {
-	taskID, ok := parseID(c)
-	if !ok {
-		return
-	}
-	attachmentID, ok := parseAttachmentID(c)
-	if !ok {
-		return
-	}
-
-	attachment, path, err := h.service.Resolve(actor(c), taskID, attachmentID)
-	if errors.Is(err, repository.ErrNotFound) {
-		respondError(c, http.StatusNotFound, "NOT_FOUND", "Attachment not found")
-		return
-	}
-	if err != nil {
-		respondError(c, http.StatusInternalServerError, "INTERNAL", "Failed to fetch attachment")
-		return
-	}
-	c.FileAttachment(path, attachment.FileName)
-}
-
 func (h *AttachmentHandler) Delete(c *gin.Context) {
 	taskID, ok := parseID(c)
 	if !ok {

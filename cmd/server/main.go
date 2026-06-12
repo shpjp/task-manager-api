@@ -11,6 +11,7 @@ import (
 	"task-manager-api/internal/repository"
 	"task-manager-api/internal/routes"
 	"task-manager-api/internal/services"
+	"task-manager-api/internal/storage"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,10 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if cfg.CloudinaryCloudName == "" || cfg.CloudinaryAPIKey == "" || cfg.CloudinaryAPISecret == "" {
+		log.Fatal("CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are required")
 	}
 
 	if err := config.ConnectDB(); err != nil {
@@ -43,10 +48,17 @@ func main() {
 	activityRepo := repository.NewActivityRepository(config.DB)
 	attachmentRepo := repository.NewAttachmentRepository(config.DB)
 
+	cloudinary := storage.NewCloudinary(
+		cfg.CloudinaryCloudName,
+		cfg.CloudinaryAPIKey,
+		cfg.CloudinaryAPISecret,
+		cfg.CloudinaryFolder,
+	)
+
 	authService := services.NewAuthService(userRepo, jwtManager, cfg.AdminEmails)
 	taskService := services.NewTaskService(taskRepo, activityRepo, hub)
 	attachmentService := services.NewAttachmentService(
-		attachmentRepo, taskRepo, taskService, cfg.UploadDir, cfg.MaxUploadMB<<20,
+		attachmentRepo, taskRepo, taskService, cloudinary, cfg.MaxUploadMB<<20,
 	)
 
 	r := gin.Default()

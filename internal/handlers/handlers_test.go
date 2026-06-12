@@ -16,6 +16,7 @@ import (
 	"task-manager-api/internal/repository"
 	"task-manager-api/internal/routes"
 	"task-manager-api/internal/services"
+	"task-manager-api/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
@@ -47,7 +48,7 @@ func newTestServer(t *testing.T) *gin.Engine {
 		repository.NewUserRepository(db), jwtManager, []string{"admin@example.com"},
 	)
 	attachmentService := services.NewAttachmentService(
-		repository.NewAttachmentRepository(db), taskRepo, taskService, t.TempDir(), 5<<20,
+		repository.NewAttachmentRepository(db), taskRepo, taskService, storage.NoopProvider{}, 5<<20,
 	)
 
 	r := gin.New()

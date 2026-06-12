@@ -11,14 +11,17 @@ import (
 )
 
 type Config struct {
-	AppPort        string
-	JWTSecret      string
-	TokenTTL       time.Duration
-	FrontendOrigin string
-	CookieSecure   bool
-	AdminEmails    []string
-	UploadDir      string
-	MaxUploadMB    int64
+	AppPort             string
+	JWTSecret           string
+	TokenTTL            time.Duration
+	FrontendOrigin      string
+	CookieSecure        bool
+	AdminEmails         []string
+	MaxUploadMB         int64
+	CloudinaryCloudName string
+	CloudinaryAPIKey    string
+	CloudinaryAPISecret string
+	CloudinaryFolder    string
 }
 
 func Load() (*Config, error) {
@@ -53,14 +56,17 @@ func Load() (*Config, error) {
 	}
 
 	return &Config{
-		AppPort:        getEnv("APP_PORT", "8080"),
-		JWTSecret:      secret,
-		TokenTTL:       time.Duration(ttlHours) * time.Hour,
-		FrontendOrigin: getEnv("FRONTEND_ORIGIN", "http://localhost:3000"),
-		CookieSecure:   os.Getenv("COOKIE_SECURE") == "true",
-		AdminEmails:    adminEmails,
-		UploadDir:      getEnv("UPLOAD_DIR", "./uploads"),
-		MaxUploadMB:    maxUploadMB,
+		AppPort:             getEnv("APP_PORT", "8080"),
+		JWTSecret:           secret,
+		TokenTTL:            time.Duration(ttlHours) * time.Hour,
+		FrontendOrigin:      getEnv("FRONTEND_ORIGIN", "http://localhost:3000"),
+		CookieSecure:        os.Getenv("COOKIE_SECURE") == "true",
+		AdminEmails:         adminEmails,
+		MaxUploadMB:         maxUploadMB,
+		CloudinaryCloudName: os.Getenv("CLOUDINARY_CLOUD_NAME"),
+		CloudinaryAPIKey:    os.Getenv("CLOUDINARY_API_KEY"),
+		CloudinaryAPISecret: os.Getenv("CLOUDINARY_API_SECRET"),
+		CloudinaryFolder:    getEnv("CLOUDINARY_FOLDER", "tasktheteam"),
 	}, nil
 }
 
