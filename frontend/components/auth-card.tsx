@@ -59,14 +59,15 @@ export function AuthCard({ mode }: { mode: "login" | "signup" }) {
 
   const fields: Field[] = [
     ...(mode === "signup"
-      ? [{ name: "name", label: "Name", type: "text", placeholder: "Ada Lovelace", autoComplete: "name" }]
+      ? [{ name: "name", label: "Name", type: "text", placeholder: "samaltman", autoComplete: "name" }]
       : []),
-    { name: "email", label: "Email", type: "email", placeholder: "you@example.com", autoComplete: "email" },
+    { name: "email", label: "Email", type: "email", placeholder: mode === "login" ? "samaltman@gmail.com" : "samaltman@gmail.com", autoComplete: "email" },
     {
       name: "password",
       label: "Password",
       type: "password",
       placeholder: mode === "signup" ? "At least 8 characters" : "Your password",
+      
       autoComplete: mode === "signup" ? "new-password" : "current-password",
     },
   ];
